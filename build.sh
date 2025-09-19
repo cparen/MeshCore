@@ -51,7 +51,7 @@ build_firmware() {
   export PLATFORMIO_BUILD_FLAGS="-DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
 
   # build firmware target
-  pio run -e $1
+  pio run -e $1 || exit 1
 
   # build merge-bin for esp32 fresh install
   if [ -f .pio/build/$1/firmware.bin ]; then
