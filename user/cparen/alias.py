@@ -76,4 +76,14 @@ def bf(project_name):
 	build(project_name)
 	flash(project_name)
 
+@anno_command
+def comtty():
+	"Connect to serial port with screen. Use ctrl-a ctrl-k to close."
+	shell("screen /dev/ttyUSB0 115200")
+
+@anno_command
+def restore():
+	"Restore downloaded companion bluetooth firmware"
+	shell("esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 ~/_dl/Heltec_v3_companion_radio_ble-v1.8.1-1130cf1.bin")
+
 main()
