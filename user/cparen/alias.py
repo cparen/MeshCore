@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import traceback
+import datetime
 
 cmds = dict()
 projaliases = {
@@ -14,6 +15,7 @@ projaliases = {
 }
 
 def main():
+	setup_vars()
 	try:
 		if len(sys.argv) == 1 or sys.argv[1] == '-h':
 			show_usage();
@@ -22,6 +24,13 @@ def main():
 	except Exception:
 		traceback.print_exc()
 		sys.exit(1)
+
+def setup_vars():
+	global COMMIT_HASH, FIRMWARE_BUILD_DATE, FIRMWARE_VERSION, FIRMWARE_VERSION_STRING
+	COMMIT_HASH=shellcapture("git rev-parse --short HEAD")
+	FIRMWARE_BUILD_DATE=datetime.date.today().strftime('+%d-%b-%Y-t%H%M')
+	FIRMWARE_VERSION = os.environ["FIRMWARE_VERSION"]
+	FIRMWARE_VERSION_STRING=f"{FIRMWARE_VERSION}-{COMMIT_HASH}"
 
 def anno_command(fn):
 	cmds[fn.__name__] = fn
@@ -35,18 +44,21 @@ def show_usage():
 def shell(command_string):
 	print(f"executing {command_string}")
 	ec = os.system(command_string)
-	if ec: raise f"failed with exit code {ec}"
+	if ec: raise Exception(f"failed with exit code {ec}")
+
+def shellcapture(command_string):
+	return subprocess.check_output(command_string, shell=True, text=True).strip()
 
 def do_command(command, *argv):
 	if command not in cmds:
-		raise "command not found"
+		raise Exception("command not found")
 	cmds[command](*argv)
 
 @anno_command
 def wh(command):
 	"(wh)at: Show docstring for the command"
 	if command not in cmds:
-		raise "command not found"
+		raise Exception("command not found")
 	print(cmds[command].__doc__)
 
 @anno_command
@@ -58,17 +70,32 @@ def pa():
 
 @anno_command
 def build(project_name):
-	"Build a project firmware. Use 'pa' to see list of project aliases."
+	"""
+	Build a project firmware. 
+
+	Use 'pa' to see list of project aliases.
+	Based on build.sh in root of repo.
+	"""
 	target = projaliases[project_name]
-	shell(f"./build.sh build-firmware {target}")
+	FIRMWARE_FILENAME=f"{target}-{FIRMWARE_VERSION_STRING}"
+	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\"'"
+
+	shell(f"pio run -e {target}")
+	shell(f"pio run -t mergebin -e {target}")
+	 
 
 @anno_command
 def flash(project_name):
-	"Flash a resulting firmware. Use 'pa' to see list of project aliases."
+	"""
+	Flash a resulting firmware.
+
+	Use 'pa' to see list of project aliases.
+	Based on build.sh in root of repo.
+	"""
 	target = projaliases[project_name]
-	commit =  subprocess.check_output("git rev-parse --short HEAD", shell=True, text=True).strip()
-	fwver = os.environ["FIRMWARE_VERSION"]
-	shell(f"esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 out/{target}-{fwver}-{commit}.bin")
+	FIRMWARE_FILENAME=f"{target}-{FIRMWARE_VERSION_STRING}"
+
+	shell(f"esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 out/{FIRMWARE_FILENAME}.bin")
 
 @anno_command
 def bf(project_name):
