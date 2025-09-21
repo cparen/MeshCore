@@ -18,13 +18,17 @@ namespace foxr
     void loop()
     {
       if (inUse && personality && periodMs) {
-        nextMs += periodMs;
-
-        personality(this);
-
-        if (!repeat)
+        int delta = nextMs - millis();
+        if (delta < 0)
         {
-          clear();
+          nextMs += periodMs;
+
+          personality(this);
+
+          if (!repeat)
+          {
+            clear();
+          }
         }
       }
     }

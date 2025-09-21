@@ -17,4 +17,5 @@ void setup() {
 
 void loop() {
   foxr::loop();
+  delay(1);
 }

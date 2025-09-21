@@ -106,9 +106,17 @@ def bf(project_name):
 	flash(project_name)
 
 @anno_command
+def bfc(project_name):
+	"Build and flash and then connect to comm port."
+	build(project_name)
+	flash(project_name)
+	comtty()
+
+@anno_command
 def comtty():
 	"Connect to serial port with screen. Use ctrl-a ctrl-k to close."
-	shell("screen /dev/ttyUSB0 115200")
+	# shell("screen /dev/ttyUSB0 115200")
+	shell("picocom -b 115200 /dev/ttyUSB0")
 
 @anno_command
 def restore():
