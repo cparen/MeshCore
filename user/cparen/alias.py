@@ -81,7 +81,9 @@ def build(project_name):
 	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\"'"
 
 	shell(f"pio run -e {target}")
-	shell(f"pio run -t mergebin -e {target}")
+	
+	# if you need merged bin for some reason, uncomment:
+	# shell(f"pio run -t mergebin -e {target}")
 	 
 
 @anno_command
@@ -93,9 +95,9 @@ def flash(project_name):
 	Based on build.sh in root of repo.
 	"""
 	target = projaliases[project_name]
-	FIRMWARE_FILENAME=f"{target}-{FIRMWARE_VERSION_STRING}"
+	FIRMWARE_FILENAME=f".pio/build/{target}/firmware.bin"
 
-	shell(f"esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 out/{FIRMWARE_FILENAME}.bin")
+	shell(f"esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 {FIRMWARE_FILENAME}")
 
 @anno_command
 def bf(project_name):
