@@ -1,3 +1,6 @@
+// might need -std=c++20 to get async-await
+// https://en.cppreference.com/w/cpp/language/coroutines.html
+
 #ifndef FOXR_H
 #define FOXR_H
 
@@ -5,6 +8,8 @@
 
 namespace foxr
 {
+	void println(const char* line);
+
 	// Arduino lopp function for foxr library functions
 	void loop();
 

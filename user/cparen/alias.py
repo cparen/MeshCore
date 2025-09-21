@@ -26,7 +26,7 @@ def main():
 		sys.exit(1)
 
 def setup_vars():
-	global COMMIT_HASH, FIRMWARE_BUILD_DATE, FIRMWARE_VERSION, FIRMWARE_VERSION_STRING
+	global COMMIT_HASH, FIRMWARE_BUILD_DATE, FIRMWARE_VERSION, FIRMWARE_VERSION_STRING, CFLAGS
 	COMMIT_HASH=shellcapture("git rev-parse --short HEAD")
 	FIRMWARE_BUILD_DATE=datetime.date.today().strftime('+%d-%b-%Y-t%H%M')
 	FIRMWARE_VERSION = os.environ["FIRMWARE_VERSION"]
@@ -69,7 +69,7 @@ def pa():
 		print(f"{k}: {v}")
 
 @anno_command
-def build(project_name):
+def build(project_name, *vargs):
 	"""
 	Build a project firmware. 
 
@@ -78,9 +78,11 @@ def build(project_name):
 	"""
 	target = projaliases[project_name]
 	FIRMWARE_FILENAME=f"{target}-{FIRMWARE_VERSION_STRING}"
-	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\"'"
+	CCFLAGS=os.getenv('CCFLAGS')
+	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\" {CCFLAGS}'"
 
-	shell(f"pio run -e {target}")
+	os.environ['PLATFORMIO_BUILD_FLAGS'] = PLATFORMIO_BUILD_FLAGS
+	shell(f"pio run -e {target} {' '.join(vargs)}")
 	
 	# if you need merged bin for some reason, uncomment:
 	# shell(f"pio run -t mergebin -e {target}")
