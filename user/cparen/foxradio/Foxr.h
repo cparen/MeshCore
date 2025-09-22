@@ -5,45 +5,115 @@
 #define FOXR_H
 
 #include <cstddef>
+#include <coroutine>
+#include <new>
 
 namespace foxr
 {
-	void println(const char* line);
+  void println(const char* line);
 
-	// Arduino lopp function for foxr library functions
-	void loop();
+  // Arduino lopp function for foxr library functions
+  void loop();
 
-	// Timer functionality
-	class Timer;
-	typedef void (*TimerPersonality)(Timer* timer);
+  // Timer functionality
+  class Timer;
+  typedef void (*TimerPersonality)(Timer* timer);
 
-	const size_t timer_max_alloc = 12;
+  const size_t timer_max_alloc = 12;
 
-	// low level timer allocation functions
-	Timer* timer_alloc();
-	void   timer_setpersonality(Timer* timer, TimerPersonality personality);
-	void*  timer_getctx(Timer* timer);
-	void   timer_schedule(Timer* timer, int period, bool repeat);
+  // low level timer allocation functions
+  Timer* timer_alloc();
+  void   timer_setpersonality(Timer* timer, TimerPersonality personality);
+  void*  timer_getctx(Timer* timer);
+  void   timer_schedule(Timer* timer, int period, bool repeat);
 
-	// set a forever timer
-	// TODO cleanup
-	template <class Fn>
-	int periodic(int everyMs, Fn callable) 
-	{
-		if (sizeof(Fn) > timer_max_alloc) {
-			return 0;
-		}
-		Timer* timer = timer_alloc();
-		if (!timer) {
-			return 0;
-		}
-		new (timer_getctx(timer)) Fn(callable);
-		timer_setpersonality(timer, [](Timer* t) {
-			Fn& callable = *static_cast<Fn*>(timer_getctx(t));
-			callable();
-		});
-		timer_schedule(timer, everyMs, true);
-	}
+  // set a forever timer
+  // TODO cleanup
+  template <class Fn>
+  int periodic(int everyMs, Fn callable) 
+  {
+    if (sizeof(Fn) > timer_max_alloc) {
+      return 0;
+    }
+    Timer* timer = timer_alloc();
+    if (!timer) {
+      return 0;
+    }
+    new (timer_getctx(timer)) Fn(callable);
+    timer_setpersonality(timer, [](Timer* t) {
+      Fn& callable = *static_cast<Fn*>(timer_getctx(t));
+      callable();
+    });
+    timer_schedule(timer, everyMs, true);
+    return 1;
+  }
+
+  // set a forever timer
+  // TODO cleanup
+  template <class Fn>
+  int once(int delayMs, Fn callable) 
+  {
+    if (sizeof(Fn) > timer_max_alloc) {
+      return 0;
+    }
+    Timer* timer = timer_alloc();
+    if (!timer) {
+      return 0;
+    }
+    new (timer_getctx(timer)) Fn(callable);
+    timer_setpersonality(timer, [](Timer* t) {
+      Fn& callable = *static_cast<Fn*>(timer_getctx(t));
+      callable();
+    });
+    timer_schedule(timer, delayMs, false);
+    return 1;
+  }
+#if __cpp_impl_coroutine
+  // TODO: for some reason std:suspend_never isn't visible on esp32 12.2.0 verison of
+  // <coroutine> header. Defining our own instance here.
+  struct suspend_never
+  {
+    constexpr bool await_ready() const noexcept { return true; }
+    constexpr void await_suspend( std::coroutine_handle<> ) const noexcept {}
+    constexpr void await_resume() const noexcept {}
+  };
+
+  class BasicCoroutine {
+  public:
+    struct Promise {
+      BasicCoroutine get_return_object() { return BasicCoroutine {}; }
+      void unhandled_exception() noexcept { }
+      void return_void() noexcept { }
+      suspend_never initial_suspend() noexcept { 
+        return {};
+      }
+      suspend_never final_suspend() noexcept { 
+        return {};
+      }
+    };
+    using promise_type = Promise;
+  };
+
+  // awaits the execution of std::once
+  struct later
+  {
+    int delayMs;
+    later(int delayMs) : delayMs(delayMs) {}
+    bool await_ready() const noexcept { return false; }
+
+    void await_suspend(std::coroutine_handle<> handle) noexcept {
+      foxr::once(delayMs, [=](){
+        handle.resume();
+      });
+    }
+    void await_resume() const noexcept { }
+
+    auto operator co_await() {
+      return *this;
+    }
+  };
+#endif
+
 }
 
 

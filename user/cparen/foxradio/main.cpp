@@ -2,33 +2,24 @@
 #include <Arduino.h>
 #endif
 
-//#include <coroutine>
-//#include <generator>
 // for placement new
 #include <new> 
-//#include <generator>
 #include <cstdio>
+#include <coroutine>
+#include <future>
+#include <variant>
+#include <chrono>
+#include <thread>
 
 #include "RadioConfig.h"
 #include "Foxr.h"
 
 using namespace std;
 
-
-// generator<int> g;
-// generator<int> fib()
-// {
-//   int a=0, b=1;
-//   while (true) {
-//     co_yield a;
-//     b += a;
-//     a = b - a; 
-//   }
-// }
-
 char buf[100];
 
 void setup() {
+
 #if FOXR_EMBEDDED
   Serial.begin(115200);
   delay(1000);
@@ -37,16 +28,30 @@ void setup() {
 
   foxr::println("Serial Begin!"); 
 
-  foxr::periodic(5000, []{
-    foxr::println("Hello, World!"); 
+  auto _ = std::async([]() -> foxr::BasicCoroutine {
+    for (int i=0;;++i) {
+      sprintf(buf, "Hello, World! [%d]", i);
+      foxr::println(buf);
 
-    // int a = g();
-    // sprintf(buf, "fib -> %d", a)
-    // Serial.println(buf); 
+      co_await foxr::later(4000);
+    } 
+    co_return;
   });
 }
 
 void loop() {
   foxr::loop();
-  delay(1);
 }
+
+// for compiling for desktop only
+#ifndef FOXR_EMBEDDED
+int main()
+{
+  setup();
+  for (;;)
+  {
+    loop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+}
+#endif

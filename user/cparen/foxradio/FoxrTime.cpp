@@ -1,9 +1,32 @@
+#ifdef FOXR_EMBEDDED
 #include <Arduino.h>   // needed for PlatformIO
+#else
+#include <chrono>
+#endif
 #include "Foxr.h"
 
 
 namespace foxr
-{
+{ 
+  #ifndef FOXR_EMBEDDED
+
+  // on desktop, polyfill startup
+  int mintime;
+  int millis()
+  {
+    auto now = std::chrono::system_clock::now();
+    auto duration_since_epoch = now.time_since_epoch();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration_since_epoch).count();
+
+    if (mintime == 0) {
+      mintime = milliseconds;
+      return 0;
+    } else {
+      return milliseconds - mintime;
+    }
+  }
+  #endif
+
   class Timer
   {
   public:
@@ -63,7 +86,7 @@ namespace foxr
 
   void*  timer_getctx(Timer* timer)
   {
-    &timer->user;
+    return &timer->user;
   }
   void   timer_schedule(Timer* timer, int periodMs, bool repeat)
   {
