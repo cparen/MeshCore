@@ -1,15 +1,7 @@
-#if FOXR_EMBEDDED
 #include <Arduino.h>
-#endif
 
-// for placement new
-#include <new> 
 #include <cstdio>
-#include <coroutine>
 #include <future>
-#include <variant>
-#include <chrono>
-#include <thread>
 
 #include "RadioConfig.h"
 #include "Foxr.h"

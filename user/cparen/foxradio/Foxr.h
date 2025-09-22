@@ -68,26 +68,18 @@ namespace foxr
     timer_schedule(timer, delayMs, false);
     return 1;
   }
+  
 #if __cpp_impl_coroutine
-  // TODO: for some reason std:suspend_never isn't visible on esp32 12.2.0 verison of
-  // <coroutine> header. Defining our own instance here.
-  struct suspend_never
-  {
-    constexpr bool await_ready() const noexcept { return true; }
-    constexpr void await_suspend( std::coroutine_handle<> ) const noexcept {}
-    constexpr void await_resume() const noexcept {}
-  };
-
   class BasicCoroutine {
   public:
     struct Promise {
       BasicCoroutine get_return_object() { return BasicCoroutine {}; }
       void unhandled_exception() noexcept { }
       void return_void() noexcept { }
-      suspend_never initial_suspend() noexcept { 
+      std::suspend_never initial_suspend() noexcept { 
         return {};
       }
-      suspend_never final_suspend() noexcept { 
+      std::suspend_never final_suspend() noexcept { 
         return {};
       }
     };
