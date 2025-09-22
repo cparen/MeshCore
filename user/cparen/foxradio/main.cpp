@@ -19,15 +19,12 @@ using namespace std;
 char buf[100];
 
 void setup() {
-
-#if FOXR_EMBEDDED
+  // init searial
   Serial.begin(115200);
   delay(1000);
-#endif
-
-
   foxr::println("Serial Begin!"); 
 
+  // start background hello world heartbeat
   auto _ = std::async([]() -> foxr::BasicCoroutine {
     for (int i=0;;++i) {
       sprintf(buf, "Hello, World! [%d]", i);
@@ -40,18 +37,7 @@ void setup() {
 }
 
 void loop() {
+  // inform components of loop call 
   foxr::loop();
 }
 
-// for compiling for desktop only
-#ifndef FOXR_EMBEDDED
-int main()
-{
-  setup();
-  for (;;)
-  {
-    loop();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-}
-#endif
