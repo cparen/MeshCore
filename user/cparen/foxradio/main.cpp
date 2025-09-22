@@ -2,7 +2,8 @@
 #include <Arduino.h>
 #endif
 
-#include <coroutine>
+//#include <coroutine>
+//#include <generator>
 // for placement new
 #include <new> 
 //#include <generator>
@@ -13,25 +14,17 @@
 
 using namespace std;
 
-#if FOXR_EMBEDDED
-template <class T>
-class generator
-{
 
-};
-#endif
-
-generator<int> g;
-
-generator<int> fib()
-{
-  int a=0, b=1;
-  while (true) {
-    co_yield a;
-    b += a;
-    a = b - a; 
-  }
-}
+// generator<int> g;
+// generator<int> fib()
+// {
+//   int a=0, b=1;
+//   while (true) {
+//     co_yield a;
+//     b += a;
+//     a = b - a; 
+//   }
+// }
 
 char buf[100];
 
@@ -42,14 +35,14 @@ void setup() {
 #endif
 
 
-  forx::println("Serial Begin!"); 
+  foxr::println("Serial Begin!"); 
 
   foxr::periodic(5000, []{
-    forx::println("Hello, World!"); 
+    foxr::println("Hello, World!"); 
 
-    int a = g();
-    sprintf(buf, "fib -> %d", a)
-    Serial.println(buf); 
+    // int a = g();
+    // sprintf(buf, "fib -> %d", a)
+    // Serial.println(buf); 
   });
 }
 
