@@ -72,7 +72,8 @@ namespace foxr
 #if __cpp_impl_coroutine
   class BasicCoroutine {
   public:
-    struct Promise {
+    class Promise {
+    public:
       BasicCoroutine get_return_object() { return BasicCoroutine {}; }
       void unhandled_exception() noexcept { }
       void return_void() noexcept { }
@@ -83,6 +84,7 @@ namespace foxr
         return {};
       }
     };
+
     using promise_type = Promise;
   };
 
@@ -105,6 +107,9 @@ namespace foxr
     }
   };
 #endif
+
+  BasicCoroutine::Promise readln(char* buf, size_t buflen);
+
 
 }
 

@@ -9,6 +9,7 @@
 using namespace std;
 
 char buf[100];
+char buf2[100];
 
 void setup() {
   // init searial
@@ -25,6 +26,13 @@ void setup() {
       co_await foxr::later(4000);
     } 
     co_return;
+  });
+
+  auto _ = std::async([]() -> foxr::BasicCoroutine {
+    char buf2[200];
+    co_await foxr::readln(buf, countof(buf));
+    sprintf(buf2, "heard: %s", buf);
+    foxr::println(buf2);
   });
 }
 

@@ -65,8 +65,8 @@ def wh(command):
 def pa():
 	"Print available project aliases"
 	print("available projects to build or flash")
-	for k,v in projaliases:
-		print(f"{k}: {v}")
+	for k in projaliases.keys():
+		print(f"{k}: {projaliases[k]}")
 
 @anno_command
 def build(project_name, *vargs):
@@ -79,8 +79,9 @@ def build(project_name, *vargs):
 	target = projaliases[project_name]
 	FIRMWARE_FILENAME=f"{target}-{FIRMWARE_VERSION_STRING}"
 	CCFLAGS=os.getenv('CCFLAGS')
-	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\" {CCFLAGS}'"
+	PLATFORMIO_BUILD_FLAGS=f"-DFIRMWARE_BUILD_DATE='\"{FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"{FIRMWARE_VERSION_STRING}\"' {CCFLAGS or ''}"
 
+	print(f"PLATFORMIO_BUILD_FLAGS={PLATFORMIO_BUILD_FLAGS}")
 	os.environ['PLATFORMIO_BUILD_FLAGS'] = PLATFORMIO_BUILD_FLAGS
 	shell(f"pio run -e {target} {' '.join(vargs)}")
 	
@@ -123,6 +124,7 @@ def comtty():
 @anno_command
 def restore():
 	"Restore downloaded companion bluetooth firmware"
-	shell("esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 ~/_dl/Heltec_v3_companion_radio_ble-v1.8.1-1130cf1.bin")
+	image = "Heltec_v3_companion_radio_ble-v1.9.0-b92d9bd.bin"
+	shell(f"esptool -p /dev/ttyUSB0 --chip esp32-s3 write-flash 0x10000 ~/_dl/{image}")
 
 main()
