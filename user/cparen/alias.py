@@ -11,7 +11,8 @@ import datetime
 cmds = dict()
 projaliases = {
 	'fox': 'Heltec_v3_user_cparen_foxradio',
-	'comp': 'Heltec_v3_companion_radio_ble'
+	'comp': 'Heltec_v3_companion_radio_ble',
+	'compusb': 'Heltec_v3_companion_radio_usb'
 }
 
 def main():

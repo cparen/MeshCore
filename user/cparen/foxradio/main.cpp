@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include <cstdio>
+#include <array>
 #include <future>
 
 #include "RadioConfig.h"
@@ -18,7 +19,7 @@ void setup() {
   foxr::println("Serial Begin!"); 
 
   // start background hello world heartbeat
-  auto _ = std::async([]() -> foxr::BasicCoroutine {
+  (void)std::async([]() -> foxr::BasicCoroutine {
     for (int i=0;;++i) {
       sprintf(buf, "Hello, World! [%d]", i);
       foxr::println(buf);
@@ -28,12 +29,14 @@ void setup() {
     co_return;
   });
 
-  auto _ = std::async([]() -> foxr::BasicCoroutine {
+
+  (void)std::async([]() -> foxr::BasicCoroutine {
     char buf2[200];
-    co_await foxr::readln(buf, countof(buf));
+    co_await foxr::readln(buf, std::size(buf));
     sprintf(buf2, "heard: %s", buf);
     foxr::println(buf2);
   });
+
 }
 
 void loop() {
