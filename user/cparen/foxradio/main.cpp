@@ -13,7 +13,7 @@ char buf[100];
 char buf2[100];
 
 void setup() {
-  // init searial
+  // init serial
   Serial.begin(115200);
   delay(1000);
   foxr::println("Serial Begin!"); 
