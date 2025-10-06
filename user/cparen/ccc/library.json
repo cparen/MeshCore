@@ -1,10 +1,14 @@
 {
   "name":"ccc",
-  "sentence": "c/cc's helper libraries",
+  "description": "c/cc's helper libraries",
   "version": "0.0.0",
   "authors": [{ "name": "c/cc" }],
   "license": "MIT",
   "frameworks": "*",
   "platforms": "*",
-  "headers": ["include/ccc_coro.h"]
+  "headers": ["include/ccc_coro.h"],
+  "build": {
+    "srcDir": "src",
+    "flags": ["--std=gnu++2a", "-fcoroutines"]
+  }
 }

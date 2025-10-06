@@ -4,17 +4,27 @@
 #include <Arduino.h>
 #endif
 
+using namespace ccc;
+
 void println(const char* msg);
+
+std::coroutine_handle<> todo_;
 
 void user()
 {
   char buf[80];
 
   println("Hello, world!");
-  sprintf(buf, "%d + %d = %d", 2, 3, ccc::add(2,3));
-  println(buf);
 
   // TODO: kick off async input-output loop
+  async_and_forget([]() -> Coro<int> {
+    println("about to suspend...");
+    co_await callcch_dangerous([](coroutine_handle<> h){
+      todo_ = h;
+    });
+    println("...done suspending!");
+    co_return 0;
+  });
 }
 
 #ifdef ARDUINO
@@ -28,7 +38,9 @@ void setup()
 }
 void loop()
 {
-
+  if(todo_) {
+    todo_.resume();
+  }
 }
 void println(const char* msg)
 {
@@ -38,6 +50,9 @@ void println(const char* msg)
 int main()
 {
   user();
+  while(todo_) {
+    todo_.resume();
+  }
 }
 void println(const char* msg)
 {
