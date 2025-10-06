@@ -13,6 +13,8 @@ void user()
   println("Hello, world!");
   sprintf(buf, "%d + %d = %d", 2, 3, ccc::add(2,3));
   println(buf);
+
+  // TODO: kick off async input-output loop
 }
 
 #ifdef ARDUINO
