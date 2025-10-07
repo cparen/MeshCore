@@ -140,7 +140,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         getRTCClock()->setCurrentTime(sender_timestamp + 1);
         uint32_t now = getRTCClock()->getCurrentTime();
         DateTime dt = DateTime(now);
-        sprintf(reply, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+        sprintf(reply, "OK - clock set: %d/%d/%d t %02d:%02d UTC", dt.year(), dt.month(), dt.day(),  dt.hour(), dt.minute());
       } else {
         strcpy(reply, "ERR: clock cannot go backwards");
       }
@@ -151,7 +151,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
     } else if (memcmp(command, "clock ", 6) == 0) {
       // read time in same format as we print
       int hh,mm,DD,MM,YYYY;
-      int matched = sscanf(command+6, "%d:%d - %d/%d/%d", &hh, &mm, &DD, &MM, &YYYY);
+      int matched = sscanf(command+6, "%d/%d/%d t %d:%d", &YYYY, &MM, &DD, &hh, &mm);
       if (matched == 5) {
         DateTime dt(YYYY, MM, DD, hh, mm);
         getRTCClock()->setCurrentTime(dt.unixtime());
@@ -162,7 +162,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
     } else if (memcmp(command, "clock", 5) == 0) {
       uint32_t now = getRTCClock()->getCurrentTime();
       DateTime dt = DateTime(now);
-      sprintf(reply, "%02d:%02d - %02d/%02d/%02d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
+      sprintf(reply, "%04d/%02d/%02d t %02d:%02d UTC", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute());
     } else if (memcmp(command, "time ", 5) == 0) {  // set time (to epoch seconds)
       uint32_t secs = _atoi(&command[5]);
       uint32_t curr = getRTCClock()->getCurrentTime();

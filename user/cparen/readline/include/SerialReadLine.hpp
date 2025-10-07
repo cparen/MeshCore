@@ -6,11 +6,11 @@
 class SerialReadLine {
 public:
     // Returns the completed line buffer (const char*) if ENTER is pressed, otherwise returns nullptr.
-    const char* update();
+    char* update();
     void reset();
 
 private:
-    static const int MAX_LINE_LENGTH = 80;
+    static const int MAX_LINE_LENGTH = 160;
     char lineBuffer[MAX_LINE_LENGTH + 1]; // +1 for null terminator
     int bufferLength = 0;   // The total number of characters in the buffer
     int cursorPosition = 0; // The index where the next character will be inserted

@@ -2,6 +2,7 @@
 #include <Mesh.h>
 
 #include "MyMesh.h"
+#include <SerialReadLine.hpp>
 
 #ifdef DISPLAY_CLASS
   #include "UITask.h"
@@ -84,29 +85,21 @@ void setup() {
   the_mesh.sendSelfAdvertisement(16000);
 }
 
-void loop() {
-  int len = strlen(command);
-  while (Serial.available() && len < sizeof(command)-1) {
-    char c = Serial.read();
-    if (c != '\n') {
-      command[len++] = c;
-      command[len] = 0;
-    }
-    Serial.print(c);
-  }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
-  }
 
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
-    command[len - 1] = 0;  // replace newline with C string null terminator
+SerialReadLine readline;
+
+void loop() {
+  
+  // check command input
+  char* command = readline.update();
+  if (command) {  // received complete line
     char reply[160];
     the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
     if (reply[0]) {
-      Serial.print("  -> "); Serial.println(reply);
+      // note: client terminal may not have printed return character, so include.
+      Serial.println();
+      Serial.print(" -> "); Serial.println(reply);
     }
-
-    command[0] = 0;  // reset command buffer
   }
 
   the_mesh.loop();

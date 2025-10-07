@@ -30,7 +30,7 @@ void SerialReadLine::redrawLine() {
     moveCursor(moves, 'D'); // 'D' is for left
 }
 
-const char* SerialReadLine::update() {
+char* SerialReadLine::update() {
     if (!Serial.available()) {
         return nullptr;
     }
