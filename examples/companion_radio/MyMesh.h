@@ -8,11 +8,11 @@
 #define FIRMWARE_VER_CODE 7
 
 #ifndef FIRMWARE_BUILD_DATE
-#define FIRMWARE_BUILD_DATE "1 Sep 2025"
+#define FIRMWARE_BUILD_DATE "2 Oct 2025"
 #endif
 
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "v1.8.1"
+#define FIRMWARE_VERSION "v1.9.1"
 #endif
 
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
@@ -112,7 +112,7 @@ protected:
   bool onContactPathRecv(ContactInfo& from, uint8_t* in_path, uint8_t in_path_len, uint8_t* out_path, uint8_t out_path_len, uint8_t extra_type, uint8_t* extra, uint8_t extra_len) override;
   void onDiscoveredContact(ContactInfo &contact, bool is_new, uint8_t path_len, const uint8_t* path) override;
   void onContactPathUpdated(const ContactInfo &contact) override;
-  bool processAck(const uint8_t *data) override;
+  ContactInfo* processAck(const uint8_t *data) override;
   void queueMessage(const ContactInfo &from, uint8_t txt_type, mesh::Packet *pkt, uint32_t sender_timestamp,
                     const uint8_t *extra, int extra_len, const char *text);
 
@@ -198,6 +198,8 @@ private:
   struct Frame {
     uint8_t len;
     uint8_t buf[MAX_FRAME_SIZE];
+
+    bool isChannelMsg() const;
   };
   int offline_queue_len;
   Frame offline_queue[OFFLINE_QUEUE_SIZE];
@@ -205,6 +207,7 @@ private:
   struct AckTableEntry {
     unsigned long msg_sent;
     uint32_t ack;
+    ContactInfo* contact;
   };
   #define EXPECTED_ACK_TABLE_SIZE 8
   AckTableEntry expected_ack_table[EXPECTED_ACK_TABLE_SIZE]; // circular table
