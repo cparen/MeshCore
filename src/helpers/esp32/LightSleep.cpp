@@ -7,6 +7,7 @@
 // Sleep for 3 second (adjust lower for better stability, e.g., 500ms or 500000ULL microseconds)
 #define LIGHTSLEEP_TIME_TO_SLEEP_MS  500
 #define LIGHTSLEEP_SLEEPY_WAKE_MS 50
+#define LIGHTSLEEP_SLEEPY_BLEWAKE_MS 3000
 
 namespace esp32 {
   int lightsleep_waketime = 0;
@@ -76,6 +77,10 @@ namespace esp32 {
     case '3': 
     case '2':
     case '1':
+      if (radioActive) {
+        state = '!';
+        break;
+      }
       if (sw.elapsed() > 1000) {
         state -= 1;
         sw.restart();
@@ -110,7 +115,11 @@ namespace esp32 {
         Serial.printf("lightsleep: waking after quiet rest. slept=%d\r\n", sleepcnt);
         return;
       }
-      if (sw_inner.elapsed() < LIGHTSLEEP_SLEEPY_WAKE_MS) {
+      int sleepy_wake = LIGHTSLEEP_SLEEPY_WAKE_MS;
+      if (sleepcnt % 10 == 0) {
+        sleepy_wake = LIGHTSLEEP_SLEEPY_BLEWAKE_MS;
+      }
+      if (sw_inner.elapsed() < sleepy_wake) {
         // stay awake a bit longer, running at 
         // LIGHTSLEEP_SLEEPY_WAKE_MS / LIGHTSLEEP_TIME_TO_SLEEP_MS dutycyle
         return;
