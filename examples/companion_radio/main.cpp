@@ -2,6 +2,10 @@
 #include <Mesh.h>
 #include "MyMesh.h"
 
+#ifdef ESP32
+#include <helpers/esp32/LightSleep.h>
+#endif
+
 // Believe it or not, this std C function is busted on some platforms!
 static uint32_t _atoi(const char* sp) {
   uint32_t n = 0;
@@ -219,6 +223,10 @@ void setup() {
 #ifdef DISPLAY_CLASS
   ui_task.begin(disp, &sensors, the_mesh.getNodePrefs());  // still want to pass this in as dependency, as prefs might be moved
 #endif
+
+#ifdef ESP32
+  esp32::lightsleep_setup();
+#endif
 }
 
 void loop() {
@@ -226,5 +234,9 @@ void loop() {
   sensors.loop();
 #ifdef DISPLAY_CLASS
   ui_task.loop();
+#endif
+
+#ifdef ESP32
+  esp32::lightsleep_loop(serial_interface.isConnected() && serial_interface.isWriteBusy());
 #endif
 }
