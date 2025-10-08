@@ -42,7 +42,7 @@ build_firmware() {
   COMMIT_HASH=$(git rev-parse --short HEAD)
 
   # set firmware build date
-  FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y-t%H%M')
+  FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y')
 
   # get FIRMWARE_VERSION, which should be provided by the environment
   if [ -z "$FIRMWARE_VERSION" ]; then
@@ -62,7 +62,7 @@ build_firmware() {
   export PLATFORMIO_BUILD_FLAGS="${PLATFORMIO_BUILD_FLAGS} -DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
 
   # build firmware target
-  pio run -e $1 || exit 1
+  pio run -e $1
 
   # build merge-bin for esp32 fresh install
   if [ -f .pio/build/$1/firmware.bin ]; then
