@@ -5,8 +5,8 @@
 #include <Arduino.h>
 
 // Sleep for 3 second (adjust lower for better stability, e.g., 500ms or 500000ULL microseconds)
-#define LIGHTSLEEP_TIME_TO_SLEEP_MS  3000
-#define LIGHTSLEEP_SLEEPY_WAKE_MS 300
+#define LIGHTSLEEP_TIME_TO_SLEEP_MS  500
+#define LIGHTSLEEP_SLEEPY_WAKE_MS 50
 
 namespace esp32 {
   int lightsleep_waketime = 0;
@@ -64,7 +64,7 @@ namespace esp32 {
         state = '!';
         break;
       }
-      if (sw.elapsed() > 10000) {
+      if (sw.elapsed() > 3000) {
         state = '4';
         sw.restart();
         sw_inner.restart();
@@ -79,7 +79,7 @@ namespace esp32 {
       if (sw.elapsed() > 1000) {
         state -= 1;
         sw.restart();
-        Serial.printf("lightsleep: %d\r\n", state);
+        Serial.printf("lightsleep: %c\r\n", state);
         return;
       }
       break;
@@ -98,12 +98,14 @@ namespace esp32 {
       // cycles. Then we can break out of sleep when we see a bluetooth packet, but run 
       // very short duty cycle for the lora processing. 
       //
+      // Also, clean up state machine readability.
+      //
       if (radioActive) { 
         state = '?';
         Serial.printf("lightsleep: waking, radio activity. slept=%d\r\n", sleepcnt);
         break;
       }
-      if (sw.elapsed() > 20000) {
+      if (sw.elapsed() > 30000) {
         state = '?';
         Serial.printf("lightsleep: waking after quiet rest. slept=%d\r\n", sleepcnt);
         return;
