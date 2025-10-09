@@ -1,0 +1,12 @@
+{
+  "name": "SerialReadline",
+  "version": "0.1.0",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src",
+    "srcFilter": [
+      "+<SerialReadLine.cpp>",
+      "-<main.cpp>"
+    ]
+  }
+}
