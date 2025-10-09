@@ -1,6 +1,7 @@
 #include <Arduino.h>   // needed for PlatformIO
 #include <Mesh.h>
 #include "MyMesh.h"
+#include <SerialReadLine.hpp>
 
 #ifdef ESP32
 #include <helpers/esp32/LightSleep.h>
@@ -102,6 +103,11 @@ MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables, store
       , &ui_task
    #endif
 );
+
+#ifdef ESP32
+Esp32LightSleep lightsleep;
+SerialReadLine readline;
+#endif
 
 /* END GLOBAL OBJECTS */
 
@@ -225,11 +231,40 @@ void setup() {
 #endif
 
 #ifdef ESP32
-  esp32::lightsleep_setup();
+  lightsleep.setup();
 #endif
 }
 
+
+bool enable_lightsleep_test = 1;
+
 void loop() {
+
+#ifdef ESP32
+  if (enable_lightsleep_test) {
+    if (auto input = readline.update()) {
+      Serial.println();
+
+      char reply[100];
+      if (strcmp(input, "ls.status") == 0) {
+        sprintf(reply, "sleepy: enabled=%d duty=%d", lightsleep.enabled, lightsleep.dutyCycle);
+      } else if (strcmp(input, "ls.enable") == 0) {
+        lightsleep.enabled = true;
+        strcpy(reply, "sleepy enabled");
+      } else if (strcmp(input, "ls.disabled") == 0) {
+        lightsleep.enabled = false;
+        strcpy(reply, "sleepy disabled");
+      } else if (memcmp(input, "ls.duty ", 8) == 0) {
+        sscanf(input+8, "%d", &lightsleep.dutyCycle);
+        sprintf(reply, "duty=%d", lightsleep.dutyCycle);
+      } else {
+        strcpy(reply, "unknown command");
+      }
+      Serial.println(reply);
+    }
+  }
+#endif
+
   the_mesh.loop();
   sensors.loop();
 #ifdef DISPLAY_CLASS
@@ -237,6 +272,9 @@ void loop() {
 #endif
 
 #ifdef ESP32
-  esp32::lightsleep_loop(serial_interface.isConnected() && serial_interface.isWriteBusy());
+  if (enable_lightsleep_test) {
+    lightsleep.loop(serial_interface.isConnected());
+  }
 #endif
+
 }
