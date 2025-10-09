@@ -14,18 +14,63 @@ namespace esp32 {
   int sleepcnt = 0;
 
   struct stopwatch {
-    int start = 0;
-    void restart() { 
+    int start = 0, end=0, running =0;
+    void restart(){
       start = millis();
+      running = 1;
     }
-    int elapsed() { 
+    void start() {
+      if (running) { return; }
       int now = millis();
-      return (now - start);
+      int prev_dur = end - start; 
+      start = now - prev_dur;
+      running = 1;
+    }
+    void stop() {
+      if (!running) { return; }
+      end = millis();
+      running = 0;
+    }
+    int elapsed() {
+      if (running) { 
+        int now = millis();
+        return now - start;
+      } else {
+        return end - start;
+      }
+    }
+  };
+
+  class LightSleepStateMachine {
+    enum States {
+      Init,
+      Active,
+
+    };
+    enum StateActivity {
+      OnEnter,
+      OnActive,
+      OnIdle
+    };
+    void personality(StateActivity activity, State state) {
+      switch () {
+      
+      }
+    }
+    
+    stopwatch timeInState;
+    State currentState;
+  public:
+    LightSleepStateMachine() {
+      enter_state(STARTUP);
+    }
+    void loop() {
+      personality(OnActive, currentState);
     }
   };
 
   char state = 's';
-  stopwatch sw, sw_inner;
+  LightSleepStateMachine stateMachine;
 
   void print_wakeup_reason();
 

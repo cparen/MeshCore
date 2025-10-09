@@ -7,7 +7,7 @@ namespace esp32 {
   void lightsleep_setup();
 
   // call from loop to check for lightsleep conditions
-  void lightsleep_loop(int radioActive);
+  void lightsleep_loop(int bleActive);
 }
 
 #endif
