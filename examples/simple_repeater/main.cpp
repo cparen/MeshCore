@@ -2,14 +2,25 @@
 #include <Mesh.h>
 
 #include "MyMesh.h"
+#include <SerialReadLine.hpp>
 
 #ifdef DISPLAY_CLASS
   #include "UITask.h"
   static UITask ui_task(display);
 #endif
 
+#ifdef ESP32
+#include <helpers/esp32/LightSleep.h>
+#endif
+
 StdRNG fast_rng;
 SimpleMeshTables tables;
+
+SerialReadLine readline;
+
+#ifdef ESP32
+Esp32LightSleep lightsleep;
+#endif
 
 MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
 
@@ -82,31 +93,35 @@ void setup() {
 
   // send out initial Advertisement to the mesh
   the_mesh.sendSelfAdvertisement(16000);
+
+  lightsleep.setup();
+  lightsleep.enabled = true;
 }
 
 void loop() {
-  int len = strlen(command);
-  while (Serial.available() && len < sizeof(command)-1) {
-    char c = Serial.read();
-    if (c != '\n') {
-      command[len++] = c;
-      command[len] = 0;
-    }
-    Serial.print(c);
-  }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
-  }
+  bool serialAvailable = Serial.available();
+  bool radioActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
 
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
-    command[len - 1] = 0;  // replace newline with C string null terminator
+  if (auto command = readline.update()) {
     char reply[160];
-    the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
+    Serial.println();
+    if (strcmp(command, "sleepy") == 0) {
+      sprintf(reply, "sleepy en=%d duty=%d sleepcnt=%d", lightsleep.enabled, lightsleep.dutyCycle, lightsleep.sleepCnt);
+    } else if (strcmp(command, "sleepy on") == 0) {
+      lightsleep.enabled = true;
+      strcpy(reply, "enabled");
+    } else if (strcmp(command, "sleepy off") == 0) {
+      lightsleep.enabled = false;
+      strcpy(reply, "disabled");
+    } else if (memcmp(command, "sleepy duty ", 12) == 0) {
+      sscanf(command+12, "%d", &lightsleep.dutyCycle);
+      sprintf(reply, "duty=%d of 100", lightsleep.dutyCycle);
+    } else {
+      the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
+    }
     if (reply[0]) {
       Serial.print("  -> "); Serial.println(reply);
     }
-
-    command[0] = 0;  // reset command buffer
   }
 
   the_mesh.loop();
@@ -114,4 +129,8 @@ void loop() {
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
+  lightsleep.loop(serialAvailable + radioActive);
+
+  the_mesh.timeAwake = lightsleep.timeAwake.elapsed();
+  the_mesh.timeAsleep = lightsleep.timeAsleep.elapsed();
 }

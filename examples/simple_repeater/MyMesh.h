@@ -100,6 +100,7 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 #elif defined(WITH_ESPNOW_BRIDGE)
   ESPNowBridge bridge;
 #endif
+  int lastPacketTime;
 
   void putNeighbour(const mesh::Identity& id, uint32_t timestamp, float snr);
   uint8_t handleLoginReq(const mesh::Identity& sender, const uint8_t* secret, uint32_t sender_timestamp, const uint8_t* data);
@@ -109,6 +110,11 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
   File openAppend(const char* fname);
 
 protected:
+  mesh::DispatcherAction onRecvPacket(mesh::Packet* pkt) override {
+    lastPacketTime = millis();
+    return mesh::Mesh::onRecvPacket(pkt);
+  }
+
   float getAirtimeBudgetFactor() const override {
     return _prefs.airtime_factor;
   }
@@ -182,4 +188,10 @@ public:
   void clearStats() override;
   void handleCommand(uint32_t sender_timestamp, char* command, char* reply);
   void loop();
+
+  int getLastPacketTime() {
+    return lastPacketTime;
+  }
+
+  int timeAwake, timeAsleep;
 };
