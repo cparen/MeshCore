@@ -173,10 +173,14 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
 
 
     // Note: use addVoltage as companion app doesn't support other data types.
-    telemetry.addVoltage(TELEM_CHANNEL_SELF+1, ((float)timeAwake) / (timeAwake+timeAsleep) * 100.0f);
-    telemetry.addVoltage(TELEM_CHANNEL_SELF+2, timeAwake/1000.0f);
-    telemetry.addVoltage(TELEM_CHANNEL_SELF+3, timeAsleep/1000.0f);
-
+    // days awake (companion app seems to get grumpy w large floats)
+    float day_ms = 1000.0f * 60 * 60 * 24;
+    telemetry.addVoltage(TELEM_CHANNEL_SELF+1, timeAwake/day_ms);
+    // days asleep
+    telemetry.addVoltage(TELEM_CHANNEL_SELF+2, timeAsleep/day_ms);
+    // sleep ratio
+    telemetry.addVoltage(TELEM_CHANNEL_SELF+3, ((float)timeAsleep) / (timeAwake+timeAsleep) * 100.0f);
+    
     uint8_t tlen = telemetry.getSize();
     memcpy(&reply_data[4], telemetry.getBuffer(), tlen);
     return 4 + tlen; // reply_len

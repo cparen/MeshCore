@@ -168,3 +168,32 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
     break;
   }
 }
+
+bool Esp32LightSleep::command(const char* input, char* reply)
+{
+  bool understood = true;
+  if (strcmp(input, "ls.status") == 0) {
+    int awakeSec = timeAwake.elapsed() / 1000;
+    int sleepSec = timeAsleep.elapsed() / 1000;
+    sprintf(
+      reply, 
+      "sleepy: enabled=%d duty=%d wake=%d s, sleep=%d s (%d %%)",
+      enabled,
+      dutyCycle,
+      awakeSec,
+      sleepSec,
+      sleepSec ? (sleepSec * 100)/(awakeSec+sleepSec) : 0);
+  } else if (strcmp(input, "ls.enable") == 0) {
+    enabled = true;
+    strcpy(reply, "sleepy enabled");
+  } else if (strcmp(input, "ls.disable") == 0) {
+    enabled = false;
+    strcpy(reply, "sleepy disabled");
+  } else if (memcmp(input, "ls.duty ", 8) == 0) {
+    sscanf(input+8, "%d", &dutyCycle);
+    sprintf(reply, "duty=%d", dutyCycle);
+  } else {
+    understood = false;
+  }
+  return understood;
+}

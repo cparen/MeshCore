@@ -53,6 +53,9 @@ public:
   // call from loop to check for lightsleep conditions
   void loop(int bleActive);
 
+  // user commands to configure lightsleep
+  bool command(const char* input, char* reply);
+
   Stopwatch timeAwake;
   Stopwatch timeAsleep;
 };

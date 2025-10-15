@@ -261,27 +261,8 @@ void loop() {
       Serial.println();
 
       char reply[100];
-      if (strcmp(input, "ls.status") == 0) {
-        int awakeSec = lightsleep.timeAwake.elapsed() / 1000;
-        int sleepSec = lightsleep.timeAsleep.elapsed() / 1000;
-        sprintf(
-          reply, 
-          "sleepy: enabled=%d duty=%d wake=%d s, sleep=%d s (%d %%)",
-          lightsleep.enabled,
-          lightsleep.dutyCycle,
-          awakeSec,
-          sleepSec,
-          awakeSec ? (awakeSec * 100)/(awakeSec+sleepSec) : 0);
-      } else if (strcmp(input, "ls.enable") == 0) {
-        lightsleep.enabled = true;
-        strcpy(reply, "sleepy enabled");
-      } else if (strcmp(input, "ls.disable") == 0) {
-        lightsleep.enabled = false;
-        strcpy(reply, "sleepy disabled");
-      } else if (memcmp(input, "ls.duty ", 8) == 0) {
-        sscanf(input+8, "%d", &lightsleep.dutyCycle);
-        sprintf(reply, "duty=%d", lightsleep.dutyCycle);
-      } else {
+      bool understood = lightsleep.command(input, reply);
+      if (!understood) {
         strcpy(reply, "unknown command");
       }
       Serial.println(reply);
