@@ -99,8 +99,9 @@ void setup() {
 }
 
 void loop() {
-  bool serialAvailable = Serial.available();
-  bool radioActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
+  bool bleActive = Serial.available();
+  bool loraActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
+  int radioActive = bleActive + loraActive;
 
   if (auto command = readline.update()) {
     char reply[160];
@@ -129,7 +130,7 @@ void loop() {
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
-  lightsleep.loop(serialAvailable + radioActive);
+  lightsleep.loop(radioActive);
 
   the_mesh.timeAwake = lightsleep.timeAwake.elapsed();
   the_mesh.timeAsleep = lightsleep.timeAsleep.elapsed();

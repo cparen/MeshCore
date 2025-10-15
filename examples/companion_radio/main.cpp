@@ -5,6 +5,7 @@
 
 #ifdef ESP32
 #include <helpers/esp32/LightSleep.h>
+#include <esp_wifi.h>
 #endif
 
 // Believe it or not, this std C function is busted on some platforms!
@@ -232,13 +233,27 @@ void setup() {
 
 #ifdef ESP32
   lightsleep.setup();
+  lightsleep.enabled = true;
 #endif
+
+#if defined(ESP32) && defined(BLE_PIN_CODE)
+  Serial.println("Disabling esp32 wifi.");
+  esp_wifi_set_mode(WIFI_MODE_NULL);
+#endif 
 }
 
 
 bool enable_lightsleep_test = 1;
 
 void loop() {
+  bool serActive = Serial.available();
+  bool companionActive = serial_interface.isConnected()
+#if defined(BLE_PIN_CODE)
+   || serial_interface.isRadioActive()
+#endif
+   ;
+  bool loraActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
+  int radioActive = serActive + companionActive + loraActive;
 
 #ifdef ESP32
   if (enable_lightsleep_test) {
@@ -247,11 +262,20 @@ void loop() {
 
       char reply[100];
       if (strcmp(input, "ls.status") == 0) {
-        sprintf(reply, "sleepy: enabled=%d duty=%d", lightsleep.enabled, lightsleep.dutyCycle);
+        int awakeSec = lightsleep.timeAwake.elapsed() / 1000;
+        int sleepSec = lightsleep.timeAsleep.elapsed() / 1000;
+        sprintf(
+          reply, 
+          "sleepy: enabled=%d duty=%d wake=%d s, sleep=%d s (%d %%)",
+          lightsleep.enabled,
+          lightsleep.dutyCycle,
+          awakeSec,
+          sleepSec,
+          awakeSec ? (awakeSec * 100)/(awakeSec+sleepSec) : 0);
       } else if (strcmp(input, "ls.enable") == 0) {
         lightsleep.enabled = true;
         strcpy(reply, "sleepy enabled");
-      } else if (strcmp(input, "ls.disabled") == 0) {
+      } else if (strcmp(input, "ls.disable") == 0) {
         lightsleep.enabled = false;
         strcpy(reply, "sleepy disabled");
       } else if (memcmp(input, "ls.duty ", 8) == 0) {
@@ -273,7 +297,7 @@ void loop() {
 
 #ifdef ESP32
   if (enable_lightsleep_test) {
-    lightsleep.loop(serial_interface.isConnected());
+    lightsleep.loop(radioActive);
   }
 #endif
 

@@ -45,20 +45,28 @@ void SerialBLEInterface::begin(const char* device_name, uint32_t pin_code) {
 // -------- BLESecurityCallbacks methods
 
 uint32_t SerialBLEInterface::onPassKeyRequest() {
+  lastActive = millis();
+
   BLE_DEBUG_PRINTLN("onPassKeyRequest()");
   return _pin_code;
 }
 
 void SerialBLEInterface::onPassKeyNotify(uint32_t pass_key) {
+  lastActive = millis();
+  
   BLE_DEBUG_PRINTLN("onPassKeyNotify(%u)", pass_key);
 }
 
 bool SerialBLEInterface::onConfirmPIN(uint32_t pass_key) {
+  lastActive = millis();
+  
   BLE_DEBUG_PRINTLN("onConfirmPIN(%u)", pass_key);
   return true;
 }
 
 bool SerialBLEInterface::onSecurityRequest() {
+  lastActive = millis();
+
   BLE_DEBUG_PRINTLN("onSecurityRequest()");
   return true;  // allow
 }
@@ -82,6 +90,8 @@ void SerialBLEInterface::onConnect(BLEServer* pServer) {
 }
 
 void SerialBLEInterface::onConnect(BLEServer* pServer, esp_ble_gatts_cb_param_t *param) {
+  lastActive = millis();
+
   BLE_DEBUG_PRINTLN("onConnect(), conn_id=%d, mtu=%d", param->connect.conn_id, pServer->getPeerMTU(param->connect.conn_id));
   last_conn_id = param->connect.conn_id;
 }
@@ -175,7 +185,7 @@ bool SerialBLEInterface::isWriteBusy() const {
   return millis() < _last_write + BLE_WRITE_MIN_INTERVAL;   // still too soon to start another write?
 }
 
-size_t SerialBLEInterface::checkRecvFrame(uint8_t dest[]) {
+size_t SerialBLEInterface::checkRecvFrame(uint8_t dest[]) {  
   if (send_queue_len > 0   // first, check send queue
     && millis() >= _last_write + BLE_WRITE_MIN_INTERVAL    // space the writes apart
   ) {
@@ -184,6 +194,7 @@ size_t SerialBLEInterface::checkRecvFrame(uint8_t dest[]) {
     pTxCharacteristic->notify();
 
     BLE_DEBUG_PRINTLN("writeBytes: sz=%d, hdr=%d", (uint32_t)send_queue[0].len, (uint32_t) send_queue[0].buf[0]);
+    lastActive = millis();
 
     send_queue_len--;
     for (int i = 0; i < send_queue_len; i++) {   // delete top item from queue
@@ -196,6 +207,7 @@ size_t SerialBLEInterface::checkRecvFrame(uint8_t dest[]) {
     memcpy(dest, recv_queue[0].buf, len);
 
     BLE_DEBUG_PRINTLN("readBytes: sz=%d, hdr=%d", len, (uint32_t) dest[0]);
+    lastActive = millis();
 
     recv_queue_len--;
     for (int i = 0; i < recv_queue_len; i++) {   // delete top item from queue

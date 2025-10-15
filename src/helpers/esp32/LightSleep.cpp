@@ -4,11 +4,6 @@
 #include "LightSleep.h"
 #include <Arduino.h>
 
-// Sleep interval (adjust lower for better stability, e.g., 5ms)
-#define LIGHTSLEEP_TIME_TO_SLEEP_MS  200
-#define LIGHTSLEEP_DEFAULT_DUTY 5
-//#define LIGHTSLEEP_SLEEPY_WAKE_MS 10
-//#define LIGHTSLEEP_SLEEPY_BLEWAKE_MS 3000
 
 
 void Stopwatch::restart(){
@@ -91,10 +86,11 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
     break;
   case ActiveState: // awake
     if (radioActive) {
+      // extend awake interval
       timeInState.restart();
       return;
     }
-    if (timeInState.elapsed() > 10000) {
+    if (timeInState.elapsed() > activeStateDuration) {
       changeState(SleepySoonState);
       return;
     }
@@ -108,7 +104,7 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
       return;
     }
     // give time for the message to print
-    if (timeInState.elapsed() > 1000) {
+    if (timeInState.elapsed() > 500) {
       changeState(SleepyState);
     }
     break;
@@ -139,12 +135,27 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
     // do some light sleep
     esp_light_sleep_start();
     sleepCnt++;
+
+
+    if (dozeCount * LIGHTSLEEP_TIME_TO_SLEEP_MS > LIGHTSLEEP_MAX_SLEEP_LENGTH) {
+      // Wake for a a longer period occasionally. This way even if we're having trouble
+      // detecting wakeable activity, like ble, we'll occasionally have a chance to catch 
+      // it. (Really only needed on companion radio).
+      Serial.println("lightsleep: max sleep");
+      changeState(ActiveState);
+      dozeCount = 0;
+      return;
+    }
     changeState(DozeState);
+    break;
+
+  case (DozeState + EnterState):
+    dozeCount++;
     break;
 
   case DozeState:
     if (radioActive) { 
-      Serial.println("lightsleep: waking on activity");
+      Serial.println("lightsleep: activity detect");
       changeState(ActiveState);
       return;
     }

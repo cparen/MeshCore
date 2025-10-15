@@ -17,6 +17,7 @@ class SerialBLEInterface : public BaseSerialInterface, BLESecurityCallbacks, BLE
   uint32_t _pin_code;
   unsigned long _last_write;
   unsigned long adv_restart_time;
+  int lastActive = 0; // used to trace radio activity
 
   struct Frame {
     uint8_t len;
@@ -73,6 +74,9 @@ public:
   bool isWriteBusy() const override;
   size_t writeFrame(const uint8_t src[], size_t len) override;
   size_t checkRecvFrame(uint8_t dest[]) override;
+
+  // quick hack to let us check if ble is busy, so not fall asleep.
+  bool isRadioActive() { return (uint32_t)(millis() - lastActive) < (20* 1000);  }
 };
 
 #if BLE_DEBUG_LOGGING && ARDUINO

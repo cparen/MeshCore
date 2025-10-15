@@ -101,6 +101,10 @@ public:
 
   int  getRecentlyHeard(AdvertPath dest[], int max_num);
 
+  int getLastPacketTime() {
+    return lastPacketTime;
+  }
+
 protected:
   float getAirtimeBudgetFactor() const override;
   int getInterferenceThreshold() const override;
@@ -144,6 +148,11 @@ protected:
 
   void clearPendingReqs() {
     pending_login = pending_status = pending_telemetry = pending_discovery = pending_req = 0;
+  }
+
+  mesh::DispatcherAction onRecvPacket(mesh::Packet* pkt) override {
+    lastPacketTime = millis();
+    return mesh::Mesh::onRecvPacket(pkt);
   }
 
 private:
@@ -215,6 +224,8 @@ private:
 
   #define ADVERT_PATH_TABLE_SIZE   16
   AdvertPath advert_paths[ADVERT_PATH_TABLE_SIZE]; // circular table
+
+  int lastPacketTime = 0;
 };
 
 extern MyMesh the_mesh;
