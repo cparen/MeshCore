@@ -236,9 +236,11 @@ void setup() {
   lightsleep.enabled = true;
 #endif
 
+  // extra lightsleep stuff
 #if defined(ESP32) && defined(BLE_PIN_CODE)
   Serial.println("Disabling esp32 wifi.");
   esp_wifi_set_mode(WIFI_MODE_NULL);
+  setCpuFrequencyMhz(80);
 #endif 
 }
 
@@ -253,7 +255,7 @@ void loop() {
 #endif
    ;
   bool loraActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
-  int radioActive = serActive + companionActive + loraActive;
+  int radioActive = serActive + companionActive;// + loraActive;
 
 #ifdef ESP32
   if (enable_lightsleep_test) {

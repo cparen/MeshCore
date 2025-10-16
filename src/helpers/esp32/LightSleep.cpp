@@ -1,4 +1,5 @@
 #include "esp_sleep.h"
+#include "esp_bt_main.h"
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include "LightSleep.h"
@@ -132,8 +133,10 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
       changeState(ActiveState);
       return;
     }
+
+
     // do some light sleep
-    esp_light_sleep_start();
+    do_sleep();
     sleepCnt++;
 
 
@@ -196,4 +199,18 @@ bool Esp32LightSleep::command(const char* input, char* reply)
     understood = false;
   }
   return understood;
+}
+
+void Esp32LightSleep::do_sleep() {
+
+  // shutdown wireless
+  //esp_bluedroid_disable();
+  //esp_bluedroid_deinit();
+
+  // execute sleep
+  esp_light_sleep_start();
+
+  // re-enable wireless
+  //esp_bluedroid_init();
+  //esp_bluedroid_enable();
 }
