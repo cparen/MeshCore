@@ -239,7 +239,6 @@ void setup() {
   // extra lightsleep stuff
 #if defined(ESP32) && defined(BLE_PIN_CODE)
   Serial.println("Disabling esp32 wifi.");
-  esp_wifi_set_mode(WIFI_MODE_NULL);
   setCpuFrequencyMhz(80);
 #endif 
 }
@@ -248,14 +247,6 @@ void setup() {
 bool enable_lightsleep_test = 1;
 
 void loop() {
-  bool serActive = Serial.available();
-  bool companionActive = serial_interface.isConnected()
-#if defined(BLE_PIN_CODE)
-   || serial_interface.isRadioActive()
-#endif
-   ;
-  bool loraActive = (millis() - the_mesh.getLastPacketTime()) < 1000;
-  int radioActive = serActive + companionActive;// + loraActive;
 
 #ifdef ESP32
   if (enable_lightsleep_test) {
@@ -264,6 +255,10 @@ void loop() {
 
       char reply[100];
       bool understood = lightsleep.command(input, reply);
+      // if (!understood) {
+      //   the_mesh.handleCommand(0, command, reply);
+      //   understood = !!reply[0];
+      // }
       if (!understood) {
         strcpy(reply, "unknown command");
       }
@@ -279,6 +274,20 @@ void loop() {
 #endif
 
 #ifdef ESP32
+  auto now = millis();
+  bool serActive = Serial.available();
+  bool bleConnected = serial_interface.isConnected(); 
+  bool bleActivity = (unsigned)(now - serial_interface.getLastActivity()) < 1000;
+  bool loraActive = (unsigned)(now - the_mesh.getLastPacketTime()) < 1000;
+
+  // TODO how long to stay awake for.
+  int radioActive = 0
+    + (serActive ? 5000 : 0)
+    + (bleConnected ? 1000 : 0)
+    + (bleActivity ? 1000 : 0)
+    + (loraActive ? 100 : 0)
+    ;
+
   if (enable_lightsleep_test) {
     lightsleep.loop(radioActive);
   }

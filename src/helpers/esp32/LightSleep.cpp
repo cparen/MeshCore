@@ -4,6 +4,7 @@
 #include <BLEServer.h>
 #include "LightSleep.h"
 #include <Arduino.h>
+#include <exception>
 
 
 
@@ -40,13 +41,30 @@ Esp32LightSleep::Esp32LightSleep() {
 Esp32LightSleep::~Esp32LightSleep() {
 }
 
+void Esp32LightSleep::panic(const char* message) {
+  // log a message and terminate
+  Serial.println(message);
+  delay(1000);
+  throw std::runtime_error(message);
+}
+
+// declaration missing in arduino framework
+esp_err_t esp_sleep_enable_bt_wakeup(void);
+
 void Esp32LightSleep::setup() {
   
   Serial.println("Esp32LightSleep::setup()");
-
-  // Set the timer to wake up the ESP32 from lightsleep
-  esp_sleep_enable_timer_wakeup(LIGHTSLEEP_TIME_TO_SLEEP_MS * 1000ULL);
+  
+// TODO: investigate. otherwise, might need to use polling/sleeps, e.g. maybe a longer
+// doze-wake every nth.
+#if 0
+  // and wake on bluetooth
+  if (ESP_OK != esp_sleep_enable_bt_wakeup()) {
+    panic("esp_sleep_enable_bt_wakeup() failed");
+  }
+#endif
 }
+
 
 void Esp32LightSleep::loop(int radioActive) {
   if (!this->enabled) {
@@ -74,10 +92,14 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
   if (dozeInterval < 1) {
     dozeInterval = 1;
   }
+
+  if (radioActive && radioActive > activeDur) {
+    activeDur = radioActive;
+  }
     
   switch (state + stateChange) {
   case InitState: 
-    if (timeInState.elapsed() > 1000) {
+    if (timeInState.elapsed() > LIGHTSLEEP_DEFAULT_INIT_STATE_DUR_MS) {
       changeState(ActiveState);
       return;
     }
@@ -91,7 +113,7 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
       timeInState.restart();
       return;
     }
-    if (timeInState.elapsed() > activeStateDuration) {
+    if (timeInState.elapsed() > activeDur) {
       changeState(SleepySoonState);
       return;
     }
@@ -111,6 +133,7 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
     break;
 
   case (SleepyState + EnterState):
+    activeDur = LIGHTSLEEP_DEFAULT_ACTIVE_STATE_DUR_MS;
     timeAwake.stop();
     timeAsleep.start();
     break;
@@ -180,12 +203,12 @@ bool Esp32LightSleep::command(const char* input, char* reply)
     int sleepSec = timeAsleep.elapsed() / 1000;
     sprintf(
       reply, 
-      "sleepy: enabled=%d duty=%d wake=%d s, sleep=%d s (%d %%)",
-      enabled,
-      dutyCycle,
+      "sleepy: wake=%d s, sleep=%d s (%d %%)",
       awakeSec,
       sleepSec,
       sleepSec ? (sleepSec * 100)/(awakeSec+sleepSec) : 0);
+  } else if (strcmp(input, "ls.config") == 0) {
+    sprintf(reply, "en=%d, duty=%d, sleep=%d", enabled, dutyCycle, sleepDur);
   } else if (strcmp(input, "ls.enable") == 0) {
     enabled = true;
     strcpy(reply, "sleepy enabled");
@@ -195,6 +218,9 @@ bool Esp32LightSleep::command(const char* input, char* reply)
   } else if (memcmp(input, "ls.duty ", 8) == 0) {
     sscanf(input+8, "%d", &dutyCycle);
     sprintf(reply, "duty=%d", dutyCycle);
+  } else if (memcmp(input, "ls.sleep ", 8) == 0) {
+    sscanf(input+8, "%d", &sleepDur);
+    sprintf(reply, "duty=%d", sleepDur);
   } else {
     understood = false;
   }
@@ -206,6 +232,9 @@ void Esp32LightSleep::do_sleep() {
   // shutdown wireless
   //esp_bluedroid_disable();
   //esp_bluedroid_deinit();
+
+  // Set the timer to wake up the ESP32 from lightsleep
+  esp_sleep_enable_timer_wakeup(sleepDur * 1000ULL);
 
   // execute sleep
   esp_light_sleep_start();

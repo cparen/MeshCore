@@ -76,7 +76,7 @@ public:
   size_t checkRecvFrame(uint8_t dest[]) override;
 
   // quick hack to let us check if ble is busy, so not fall asleep.
-  bool isRadioActive() { return (uint32_t)(millis() - lastActive) < (20* 1000);  }
+  int getLastActivity() { return lastActive;  }
 };
 
 #if BLE_DEBUG_LOGGING && ARDUINO
