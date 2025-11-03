@@ -1,9 +1,9 @@
 #pragma once
 
 // Sleep interval (adjust lower for better stability, e.g., 5ms)
-#define LIGHTSLEEP_TIME_TO_SLEEP_MS  50
-#define LIGHTSLEEP_DEFAULT_DUTY 15
-#define LIGHTSLEEP_DEFAULT_INIT_STATE_DUR_MS (10 * 1000)
+#define LIGHTSLEEP_TIME_TO_SLEEP_MS  20
+#define LIGHTSLEEP_DEFAULT_DUTY 5
+#define LIGHTSLEEP_DEFAULT_INIT_STATE_DUR_MS (20 * 1000)
 #define LIGHTSLEEP_DEFAULT_ACTIVE_STATE_DUR_MS (1000)
 #if defined(ROLE_REPEATER)
 #define LIGHTSLEEP_MAX_SLEEP_LENGTH (60 * 1000)
@@ -43,9 +43,10 @@ public:
   Esp32LightSleep();
   ~Esp32LightSleep();
 
-  // wake duty cycle out of 100.
   int enabled = 0;
   int sleepDur = LIGHTSLEEP_TIME_TO_SLEEP_MS;
+  
+  // wake duty cycle out of 100.
   int dutyCycle = LIGHTSLEEP_DEFAULT_DUTY;
   int activeDur = LIGHTSLEEP_DEFAULT_ACTIVE_STATE_DUR_MS;
   int sleepCnt = 0;
@@ -55,7 +56,7 @@ public:
   void setup();
 
   // call from loop to check for lightsleep conditions
-  void loop(int bleActive);
+  void loop(int radioActive);
 
   // user commands to configure lightsleep
   bool command(const char* input, char* reply);

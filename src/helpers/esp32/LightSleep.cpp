@@ -164,7 +164,7 @@ void Esp32LightSleep::personality(int radioActive, int stateChange) {
 
 
     if (dozeCount * LIGHTSLEEP_TIME_TO_SLEEP_MS > LIGHTSLEEP_MAX_SLEEP_LENGTH) {
-      // Wake for a a longer period occasionally. This way even if we're having trouble
+      // Wake for a longer period occasionally. This way even if we're having trouble
       // detecting wakeable activity, like ble, we'll occasionally have a chance to catch 
       // it. (Really only needed on companion radio).
       Serial.println("lightsleep: max sleep");
