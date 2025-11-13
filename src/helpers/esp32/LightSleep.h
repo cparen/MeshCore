@@ -1,15 +1,15 @@
 #pragma once
 
 // Sleep interval (adjust lower for better stability, e.g., 5ms)
-#define LIGHTSLEEP_TIME_TO_SLEEP_MS  20
+#define LIGHTSLEEP_TIME_TO_SLEEP_MS  10
 #define LIGHTSLEEP_DEFAULT_DUTY 5
 #define LIGHTSLEEP_DEFAULT_INIT_STATE_DUR_MS (20 * 1000)
-#define LIGHTSLEEP_DEFAULT_ACTIVE_STATE_DUR_MS (1000)
+#define LIGHTSLEEP_DEFAULT_ACTIVE_STATE_DUR_MS (3 * 1000)
 #if defined(ROLE_REPEATER)
 #define LIGHTSLEEP_MAX_SLEEP_LENGTH (60 * 1000)
 #else
 // wake up more frequently for companion, give bluetooth chance to connect
-#define LIGHTSLEEP_MAX_SLEEP_LENGTH (4 * 1000)
+#define LIGHTSLEEP_MAX_SLEEP_LENGTH (10 * 1000)
 #endif
 
 struct Stopwatch {
