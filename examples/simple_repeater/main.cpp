@@ -134,4 +134,6 @@ void loop() {
 
   the_mesh.timeAwake = lightsleep.timeAwake.elapsed();
   the_mesh.timeAsleep = lightsleep.timeAsleep.elapsed();
+
+  rtc_clock.tick();
 }

@@ -293,4 +293,5 @@ void loop() {
   }
 #endif
 
+  rtc_clock.tick();
 }
